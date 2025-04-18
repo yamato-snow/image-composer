@@ -1,36 +1,161 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 画像合成自動化ツール (Image Composition Tool)
 
-## Getting Started
+Next.jsを使用した商品画像の自動合成ツールです。テンプレートに基づいて商品情報CSVと画像を組み合わせ、一括処理することができます。
 
-First, run the development server:
+## 概要
+
+このアプリケーションは、商品画像とテキスト情報を自動的に組み合わせて統一的なデザインの画像を大量生成するためのツールです。クライアントサイドで完結する設計となっており、データベースや認証機能はありません。AWS Amplifyでのデプロイを前提としています。
+
+### 主な機能
+
+- **テンプレート管理**
+  - テンプレートの作成・編集・削除
+  - テキスト要素・画像要素の配置
+  - プレビュー機能
+
+- **バッチ処理**
+  - CSVファイルからの商品情報取り込み
+  - 商品画像の一括処理
+  - 処理結果のダウンロード
+
+## 技術スタック
+
+- **フレームワーク**: Next.js 14 (App Router)
+- **言語**: TypeScript
+- **スタイリング**: Tailwind CSS
+- **状態管理**: Zustand (ローカルストレージ使用)
+- **画像処理**: Canvas API
+- **CSV処理**: Papa Parse
+- **ZIP圧縮**: JSZip
+
+## インストール
 
 ```bash
+# プロジェクトをクローン
+git clone https://github.com/your-username/image-composer.git
+cd image-composer
+
+# 依存パッケージをインストール
+npm install
+
+# 開発サーバーを起動
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 使用方法
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### テンプレート作成
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. ホーム画面から「新規テンプレート」ボタンをクリック
+2. テンプレート名や背景色を設定
+3. 「テキスト追加」ボタンでテキスト要素を追加
+   - 商品名、価格などの動的テキストには `${name}` や `${price}` のようなプレースホルダーを使用
+4. 「画像追加」ボタンで装飾画像要素を追加
+5. 商品画像の配置位置・サイズを設定
+6. 「保存」ボタンでテンプレートを保存
 
-## Learn More
+### バッチ処理
 
-To learn more about Next.js, take a look at the following resources:
+1. 「バッチ処理」タブを選択
+2. 以下の項目を設定:
+   - 使用するテンプレートを選択
+   - 商品情報CSVファイルをアップロード
+   - 商品画像をアップロード
+3. 「処理開始」ボタンをクリック
+4. 処理完了後、生成された画像をダウンロード
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### CSVフォーマット
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+以下のようなフォーマットのCSVファイルを用意してください:
 
-## Deploy on Vercel
+```csv
+id,name,price,image_file
+1,商品名1,1000,product1.png
+2,商品名2,2000,product2.png
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `id`: 商品ID（出力ファイル名に使用）
+- `name`: 商品名（テンプレート内で${name}として参照可能）
+- `price`: 価格（テンプレート内で${price}として参照可能）
+- `image_file`: 商品画像のファイル名
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## プロジェクト構造
+
+```
+image-composer/
+├── public/
+│   └── assets/
+│       └── default-backgrounds/  # デフォルト背景画像
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx            # メインレイアウト
+│   │   ├── page.tsx              # ホームページ（テンプレート一覧）
+│   │   ├── templates/
+│   │   │   └── [id]/
+│   │   │       └── page.tsx      # テンプレート編集ページ
+│   │   └── batch/
+│   │       └── page.tsx          # バッチ処理ページ
+│   ├── components/               # UIコンポーネント
+│   ├── lib/
+│   │   ├── types/                # 型定義
+│   │   ├── utils/                # ユーティリティ関数
+│   │   └── hooks/                # カスタムフック
+│   ├── store/                    # Zustandストア
+│   └── styles/                   # スタイル定義
+```
+
+## 制限事項と注意点
+
+- このアプリケーションはクライアントサイドで動作するため、大量の画像や大きなサイズの画像を処理する場合はブラウザの性能に依存します
+- 画像やテンプレートデータはローカルストレージに保存されるため、ブラウザのストレージ容量に制限があります
+- 商品画像はファイル選択機能を使ってアップロードする必要があります
+- 生成された画像はダウンロードまたはプレビューのみ可能で、サーバーに保存されません
+
+## AWS Amplifyデプロイ方法
+
+1. AWS Amplifyコンソールにログイン
+2. 「新しいアプリケーションのデプロイ」>「GitHubからデプロイ」を選択
+3. リポジトリとブランチを選択
+4. ビルド設定を確認（デフォルト設定でOK）
+5. デプロイボタンをクリック
+
+## 開発計画（5時間実装）
+
+このプロジェクトは約5時間での実装を目標としています。以下は推奨開発順序です：
+
+1. **初期セットアップ** (30分)
+   - プロジェクト作成
+   - 必要なライブラリインストール
+
+2. **データモデルとZustandストア** (40分)
+   - 型定義
+   - テンプレートストア
+   - バッチ処理ストア
+
+3. **レイアウトとナビゲーション** (30分)
+   - 基本レイアウト
+   - ナビゲーションメニュー
+
+4. **テンプレート編集機能** (60分)
+   - テンプレート一覧
+   - 編集インターフェース
+   - キャンバスプレビュー
+
+5. **画像処理機能** (60分)
+   - Canvas APIによる画像合成
+   - テキスト配置
+   - 画像配置
+
+6. **バッチ処理機能** (60分)
+   - CSVアップロード・解析
+   - 画像選択機能
+   - 処理進捗表示
+
+7. **最終調整とテスト** (40分)
+   - エラーハンドリング
+   - UI/UX改善
+   - 動作テスト
+
+## ライセンス
+
+MITライセンス
